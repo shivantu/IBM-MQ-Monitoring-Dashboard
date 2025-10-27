@@ -1,0 +1,154 @@
+
+===============================================================================
+           IBM MQ ERROR LOG MONITORING USING ELK STACK (FILEBEAT → LOGSTASH)
+===============================================================================
+
+📅 Date: 2025-07-02
+👤 Prepared For: IBM MQ System Integrators & Observability Engineers
+📘 Purpose: Monitor IBM MQ queue manager error logs using ELK (Elastic Stack)
+🔗 References:
+   - IBM MQ Error Logs: https://www.ibm.com/docs/en/ibm-mq/9.2?topic=qmini-diagnostic-message-logging
+   - Filebeat IBM MQ Module: https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-module-ibmmq.html
+   - Logstash Pipeline: https://www.elastic.co/guide/en/logstash/current/advanced-pipeline.html
+   - Kibana Index Patterns: https://www.elastic.co/guide/en/kibana/current/index-patterns.html
+
+===============================================================================
+🧭 STEP 1: VERIFY IBM MQ LOG FILES
+===============================================================================
+✔ IBM MQ logs critical errors at:
+   • /var/mqm/errors/AMQERRnn.LOG            → Global MQ errors
+   • /var/mqm/qmgrs/<QMGR>/errors/AMQERRnn.LOG → QMgr-specific logs
+
+✔ Optional: Review `qm.ini` for QMErrorLog stanza:
+   - Controls log rotation, size, severity levels, etc.
+
+✔ Command to view logs:
+   dspmqerr
+
+More Info ➜ https://www.ibm.com/docs/en/ibm-mq/9.2?topic=qmini-diagnostic-message-logging
+
+===============================================================================
+📦 STEP 2: INSTALL ELK STACK COMPONENTS
+===============================================================================
+1. Add Elastic GPG Key & Yum Repo:
+-----------------------------------
+sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+cat <<EOF | sudo tee /etc/yum.repos.d/elastic.repo
+[elastic-8.x]
+name=Elastic repository
+baseurl=https://artifacts.elastic.co/packages/8.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+
+2. Install Packages:
+--------------------
+sudo yum install elasticsearch kibana filebeat logstash -y
+
+===============================================================================
+🔧 STEP 3: CONFIGURE ELASTICSEARCH & KIBANA
+===============================================================================
+1. Configure Elasticsearch (/etc/elasticsearch/elasticsearch.yml):
+-------------------------------------------------------------------
+network.host: localhost
+http.port: 9200
+
+sudo systemctl enable --now elasticsearch
+
+2. Configure Kibana (/etc/kibana/kibana.yml):
+----------------------------------------------
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://localhost:9200"]
+
+sudo systemctl enable --now kibana
+
+Access UI ➜ http://localhost:5601
+
+===============================================================================
+🚚 STEP 4: CONFIGURE FILEBEAT FOR IBM MQ ERROR LOGS
+===============================================================================
+1. Enable IBM MQ module in Filebeat:
+-------------------------------------
+sudo filebeat modules enable ibmmq
+
+2. Configure the IBM MQ module:
+-------------------------------
+Edit /etc/filebeat/modules.d/ibmmq.yml
+
+- module: ibmmq
+  errorlog:
+    enabled: true
+    var.paths: ["/var/mqm/qmgrs/*/errors/AMQERR*.LOG"]
+
+3. Set Logstash as the Filebeat output (in filebeat.yml):
+----------------------------------------------------------
+output.logstash:
+  hosts: ["localhost:5044"]
+
+Start Filebeat:
+---------------
+sudo systemctl enable --now filebeat
+
+Module Info ➜ https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-module-ibmmq.html
+
+===============================================================================
+🛠️ STEP 5: CONFIGURE LOGSTASH TO RECEIVE MQ LOGS
+===============================================================================
+Create Logstash pipeline config:
+--------------------------------
+File: /etc/logstash/conf.d/ibmmq.conf
+
+input {
+  beats {
+    port => 5044
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "ibmmq-error-%{+YYYY.MM.dd}"
+  }
+}
+
+Enable Logstash:
+----------------
+sudo systemctl enable --now logstash
+
+Docs ➜ https://www.elastic.co/guide/en/logstash/current/advanced-pipeline.html
+
+===============================================================================
+🔍 STEP 6: SETUP KIBANA DASHBOARDS & VISUALIZATION
+===============================================================================
+1. In Kibana:
+   Go to Stack Management → Index Patterns
+
+2. Create New Index Pattern:
+   Pattern: ibmmq-error-*
+   Time Field: @timestamp
+
+3. Go to Discover tab to explore MQ error logs!
+
+Dashboard Guide ➜ https://www.elastic.co/guide/en/kibana/current/index-patterns.html
+
+===============================================================================
+✅ FINAL ARCHITECTURE SUMMARY
+===============================================================================
+| Component     | Function                                              |
+|---------------|--------------------------------------------------------|
+| IBM MQ        | Generates error logs (AMQERRnn.LOG)                   |
+| Filebeat      | Reads logs and sends to Logstash                      |
+| Logstash      | Parses and sends structured logs to Elasticsearch     |
+| Elasticsearch | Stores logs in time-series indices                    |
+| Kibana        | Visualizes logs, search, filter, dashboard creation   |
+
+===============================================================================
+📌 NEED HELP?
+===============================================================================
+Want PDF format, sample dashboards, or Filebeat-to-Elasticsearch (no Logstash)?
+Let us know!
+
