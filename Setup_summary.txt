@@ -1,6 +1,6 @@
 
 ELK Stack Setup for IBM MQ Logs Monitoring - Conversation Summary
-==================================================================
+==================================================================.
 
 1. ✅ Kibana, Elasticsearch, and Filebeat were installed and configured.
 2. ✅ Elasticsearch secured with credentials.
