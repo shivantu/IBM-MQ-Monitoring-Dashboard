@@ -20,6 +20,7 @@ This repository includes setup steps, monitoring components architecture, troubl
 ### 🏗️ Architecture Overview
 
 <img width="800" height="400" alt="Ibm Mq Elk Architecture" src="https://github.com/user-attachments/assets/70306a1f-ae1d-4858-a376-2a5992bef4db" />
+
 ---
 ### 📊 MQ Dashboard Overview
 
