@@ -4,6 +4,10 @@ A complete guide to monitor **IBM MQ** using Dashboard & Analytics tools.
 This repository includes setup steps, monitoring components architecture, troubleshooting, and visual dashboard examples.
 
 ---
+© 2025 Shivaraj — All Rights Reserved.  
+
+
+---
 
 ### 📌 Contents
 
@@ -25,6 +29,13 @@ This repository includes setup steps, monitoring components architecture, troubl
 ### 📊 MQ Dashboard Overview
 
 <img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/cc84e40f-9e11-4e91-8d71-312cd928bcda" />
+
+## 📞 Contact
+- shivaraj
+- shivantu9@gmail.com
+- For questions or contributions, please reach out via GitHub issues.
+
+---
 
 
 
